@@ -11,6 +11,8 @@
 
 import numpy as np
 
+import re
+
 from functools import wraps
 from time import perf_counter
 
