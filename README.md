@@ -82,22 +82,18 @@ for i in range(n):
         ax.plot(Freq, dB(H_fit[:,i,j]), "--", color="blue", label="H_fit" if i==j==0 else None)
         ax.plot(Freq, dB(err_rel[:,i,j]), ":", color="green", label="err_rel" if i==j==0 else None)
         
-ax.grid(True)
-ax.legend()
+
 ax.set_xlabel("freq [Hz]")
 ax.set_ylabel("mag in dB")
+ax.grid(True)
+ax.legend()
+
+plt.savefig("test.svg")
 ```
 
 
-
-
-    Text(0, 0.5, 'mag in dB')
-
-
-
-
     
-![png](README_files/README_5_1.png)
+![png](README_files/README_5_0.png)
     
 
 
@@ -108,3 +104,14 @@ ax.set_ylabel("mag in dB")
 [2] B. Gustavsen, "Improving the pole relocating properties of vector fitting," in IEEE Transactions on Power Delivery, vol. 21, no. 3, pp. 1587-1592, July 2006, doi: 10.1109/TPWRD.2005.860281.
 
 [3] D. Deschrijver, M. Mrozowski, T. Dhaene and D. De Zutter, "Macromodeling of Multiport Systems Using a Fast Implementation of the Vector Fitting Method," in IEEE Microwave and Wireless Components Letters, vol. 18, no. 6, pp. 383-385, June 2008, doi: 10.1109/LMWC.2008.922585.
+
+
+```python
+!jupyter nbconvert --ClearMetadataPreprocessor.enabled=True --ClearOutput.enabled=True --to markdown README.ipynb
+```
+
+    [NbConvertApp] Converting notebook README.ipynb to markdown
+    [NbConvertApp] Support files will be in README_files\
+    [NbConvertApp] Making directory README_files
+    [NbConvertApp] Writing 3405 bytes to README.md
+    
