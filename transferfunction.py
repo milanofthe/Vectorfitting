@@ -48,57 +48,6 @@ class TransferFunction:
         self.Residues = Residues
         
         
-    # misc -------------------------------------------------------
-    
-    def __add__(self, other):
-        """
-        implements addition for transferfunction 
-        and (scalar, transferfunction)
-        """
-        if isinstance(other, TransferFunction):
-            Const    = self.Const + other.Const
-            Diff     = self.Diff + other.Diff
-            Poles    = np.hstack((self.Poles, other.Poles))
-            Residues = np.stack(( *self.Residues, *other.Residues ))
-            
-            return TransferFunction(Poles, Residues, Const, Diff)
-            
-        elif isinstance(other, (int, float, complex)):
-            Const    = self.Const + other
-            Diff     = self.Diff 
-            Poles    = self.Poles
-            Residues = self.Residues
-            
-            return TransferFunction(Poles, Residues, Const, Diff)
-            
-    def __mul__(self, other):
-        """
-        implements multiplication for transferfunction 
-        and (scalar, array of same dimension)
-        """
-        
-        if isinstance(other, (int, float, complex, np.ndarray)):
-            Const    = self.Const * other
-            Diff     = self.Diff * other
-            Poles    = self.Poles
-            Residues = self.Residues[:] * other
-            
-            return TransferFunction(Poles, Residues, Const, Diff)
-        
-    def __truediv__(self, other):
-        """
-        implements division for transferfunction 
-        and (scalar, array of same dimension)
-        """
-        
-        if isinstance(other, (int, float, complex, np.ndarray)):
-            Const    = self.Const / other
-            Diff     = self.Diff / other
-            Poles    = self.Poles
-            Residues = self.Residues[:] / other
-            
-            return TransferFunction(Poles, Residues, Const, Diff)
-        
     # methods for analysis ---------------------------------------
     
     def is_passive(self, Freq):
@@ -134,9 +83,8 @@ class TransferFunction:
         """
         build minimal statespace realization
         """
-        A, B, C, D, E, *_ = gilbert_realization(self.Poles, self.Residues, self.Const, self.Diff)
-
-        return A, B, C, D, E
+        return gilbert_realization(self.Poles, self.Residues, self.Const, self.Diff)
+    
     
     # methods for evaluation  ------------------------------------
     
