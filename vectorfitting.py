@@ -11,12 +11,12 @@
 
 import numpy as np
 
-from Modeling.tools import (
+from tools import (
     timer,
     find_local_maxima
     )
 
-from Modeling.macromodel import (
+from transferfunction import (
     TransferFunction
     )
 
