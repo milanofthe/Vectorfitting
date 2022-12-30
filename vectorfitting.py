@@ -56,7 +56,7 @@ class VecFit:
             smart      : (bool) autodetect initial pole configuration
             autoreduce : (bool) reduce order of model when possible
             fit_Const  : (bool) fit constant of model
-            fit_Diff   : (bool) fit differenciating part of model
+            fit_Diff   : (bool) fit differentiating part of model
         """
         
         #get number of samples
