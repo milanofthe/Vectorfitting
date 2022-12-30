@@ -11,10 +11,9 @@
 
 import numpy as np
 
-import re
-
 from functools import wraps
 from time import perf_counter
+
 
 
 
@@ -180,36 +179,7 @@ def read_snp(path):
     return np.array(Freq), np.array(Data), Z_0
 
 
-# AUX FUNCTIONS ========================================================================
 
-def H_rng(shape=(1), n_cpx=2, n_real=2, f_min=0, f_max=1000):
-    
-    """
-    generate ramdom frequency response 
-    
-    """
-    
-    omega_max = 2 * np.pi * f_max
-    omega_min = 2 * np.pi * f_min
-    
-    #real poles
-    poles_real = - (omega_min + (omega_max - omega_min) * (0.2 + 0.8 * np.random.rand(n_real))) / 3
-    res_real   = 100 * (np.random.rand(n_real, *shape)-0.5)
-    
-    #complex poles
-    poles_cpx = - (omega_min + (omega_max - omega_min) * (0.1 + 0.9 * np.random.rand(n_cpx))) / 15  \
-                + 1j * (omega_min + (omega_max - omega_min) * (0.1 + 0.9 * np.random.rand(n_cpx)))
-    res_cpx   = 1000 * (np.random.rand(n_cpx, *shape)-0.5) + 1j * 100 * (np.random.rand(n_cpx, *shape)-0.5)
-    
-    #combine
-    Poles = np.hstack(( poles_real, poles_cpx, poles_cpx.conj() ))
-    Residues = np.vstack(( res_real, res_cpx, res_cpx.conj() ))
-    
-    #const and diff
-    const = 10 * ( 0.5 - np.random.rand(*shape))
-    diff  = 20 / omega_max * (0.5 - np.random.rand(*shape))
-    
-    return TransferFunction(Poles, Residues, const, diff )
     
 # FUNCTIONS FOR EVALUATION ==================================================
 
