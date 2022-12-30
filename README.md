@@ -12,6 +12,7 @@ where $\mathbf{D}$ is the constant term, $\mathbf{E}$ is the linear term and $\m
 ```python
 import numpy as np
 import matplotlib.pyplot as plt
+plt.style.use('dark_background')
 
 from vectorfitting import VecFit
 from transferfunction import H_rng
@@ -34,30 +35,30 @@ VF = VecFit(H, Freq, n_cpx=6, n_real=2, mode="fast_relax", smart=False, autoredu
 VF.fit(tol=1e-3, max_steps=10, debug=True)
 ```
 
-    err_max  = 12.759986455682323
-    err_mean = 0.45924300619473796
-    err_max  = 0.5638168681141906
-    err_mean = 0.023082375097169424
-    err_max  = 0.01648028275113294
-    err_mean = 0.0012823360846710864
-    err_max  = 0.004482795444363178
-    err_mean = 0.0003645481069416049
-    err_max  = 0.006564979570699031
-    err_mean = 0.0003876664636241148
-    err_max  = 0.006638968315212133
-    err_mean = 0.00038736001491674444
-    err_max  = 0.006641591976707876
-    err_mean = 0.00038726987182811706
-    err_max  = 0.006639420551059769
-    err_mean = 0.00038720156165564766
-    err_max  = 0.006636819633279539
-    err_mean = 0.00038713510556181546
-    err_max  = 0.006634179502419058
-    err_mean = 0.0003870687941207088
-    err_max  = 0.00663153527719787
-    err_mean = 0.00038700247443170367
-    n_real = 0
-    n_cpx  = 7
+    err_max  = 5.99478832051229
+    err_mean = 0.36088677540720754
+    err_max  = 0.40404156390176854
+    err_mean = 0.033194212309662144
+    err_max  = 0.19764531624261317
+    err_mean = 0.01341915830720979
+    err_max  = 0.02385345473261801
+    err_mean = 0.0012276647905298632
+    err_max  = 0.0075248794431454855
+    err_mean = 0.000394116291616274
+    err_max  = 0.003225687083334311
+    err_mean = 0.0001897611772642082
+    err_max  = 0.0015309604356613868
+    err_mean = 0.00012391426301653643
+    err_max  = 0.001250438060921532
+    err_mean = 0.00010080969223796902
+    err_max  = 0.0011732043215585063
+    err_mean = 9.188134705385897e-05
+    err_max  = 0.0011420876671616154
+    err_mean = 8.82340928239582e-05
+    err_max  = 0.0011290994931467144
+    err_mean = 8.670231950199696e-05
+    n_real = 2
+    n_cpx  = 6
     
 
 
@@ -78,9 +79,9 @@ N, n, m = H.shape
 
 for i in range(n):
     for j in range(m):
-        ax.plot(Freq, dB(H[:,i,j]), "-", color="red", label="H" if i==j==0 else None)
-        ax.plot(Freq, dB(H_fit[:,i,j]), "--", color="blue", label="H_fit" if i==j==0 else None)
-        ax.plot(Freq, dB(err_rel[:,i,j]), ":", color="green", label="err_rel" if i==j==0 else None)
+        ax.plot(Freq, dB(H[:,i,j]), ".-", markevery=10, color="tab:red", label="H" if i==j==0 else None)
+        ax.plot(Freq, dB(H_fit[:,i,j]), "--", color="tab:blue", label="H_fit" if i==j==0 else None)
+        ax.plot(Freq, dB(err_rel[:,i,j]), ":", color="tab:green", label="err_rel" if i==j==0 else None)
         
 
 ax.set_xlabel("freq [Hz]")
@@ -93,7 +94,7 @@ plt.savefig("test.svg")
 
 
     
-![svg](test.svg)
+![png](README_files/README_5_0.png)
     
 
 
@@ -105,3 +106,38 @@ plt.savefig("test.svg")
 
 [3] D. Deschrijver, M. Mrozowski, T. Dhaene and D. De Zutter, "Macromodeling of Multiport Systems Using a Fast Implementation of the Vector Fitting Method," in IEEE Microwave and Wireless Components Letters, vol. 18, no. 6, pp. 383-385, June 2008, doi: 10.1109/LMWC.2008.922585.
 
+
+```python
+!jupyter nbconvert --ClearMetadataPreprocessor.enabled=True --ClearOutput.enabled=True --to markdown README.ipynb
+```
+
+    [NbConvertApp] Converting notebook README.ipynb to markdown
+    [NbConvertApp] Support files will be in README_files\
+    [NbConvertApp] Making directory README_files
+    [NbConvertApp] Writing 3791 bytes to README.md
+    
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
