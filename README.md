@@ -33,53 +33,64 @@ H    = H_rng(shape=(2, 2), n_cpx=8, n_real=2, f_min=0, f_max=1000).evaluate(Freq
 VF = VecFit(H, Freq, n_cpx=8, n_real=2, mode="fast_relax", smart=False, autoreduce=False, fit_Const=True, fit_Diff=True)
 
 #run fitting procedure
-VF.fit(tol=1e-3, max_steps=0, debug=True)
+VF.fit(tol=1e-3, max_steps=10, debug=True)
 ```
 
-    err_max  = 10.783463188560583
-    err_mean = 0.4183956352192532
-    err_max  = 0.030505900483405884
-    err_mean = 0.0029563663721864247
-    err_max  = 0.017597388099753444
-    err_mean = 0.0007699885912381359
-    err_max  = 0.018231845749601364
-    err_mean = 0.0007665771706315633
-    err_max  = 0.018202742046339117
-    err_mean = 0.0007659174051087016
-    err_max  = 0.01818766973278153
-    err_mean = 0.0007652731230669731
-    err_max  = 0.018172290370446202
-    err_mean = 0.0007646294887398828
-    err_max  = 0.018156919896438996
-    err_mean = 0.0007639860439388242
-    err_max  = 0.0181415519195631
-    err_mean = 0.0007633427826562838
-    err_max  = 0.018126186514793554
-    err_mean = 0.0007626997020003051
-    err_max  = 0.018110823618152957
-    err_mean = 0.0007620567991713711
-    err_max  = 0.018095463167374762
-    err_mean = 0.0007614140713279675
-    err_max  = 0.01808010509887936
-    err_mean = 0.0007607715155779249
-    err_max  = 0.018064749348039488
-    err_mean = 0.0007601291289795888
-    err_max  = 0.0180493958487832
-    err_mean = 0.0007594869085386267
-    err_max  = 0.018034044533908094
-    err_mean = 0.0007588448512110868
-    err_max  = 0.018018695334889808
-    err_mean = 0.00075820295389819
-    err_max  = 0.018003348181847244
-    err_mean = 0.0007575612134424022
-    err_max  = 0.017988003003457105
-    err_mean = 0.0007569196266336888
-    err_max  = 0.017972659727199077
-    err_mean = 0.0007562781902041478
-    err_max  = 0.017957318278930826
-    err_mean = 0.0007556369008220201
-    n_real = 2
-    n_cpx  = 8
+    debugging status : 
+        iteration step number  (step)          : 0
+        model order            (n_real, n_cpx) : 2, 8
+        fitting relative error (mean, max)     : 0.20947220144389897, 9.873754669895343
+    
+    debugging status : 
+        iteration step number  (step)          : 1
+        model order            (n_real, n_cpx) : 4, 7
+        fitting relative error (mean, max)     : 0.009325251862710026, 0.11294815333674414
+    
+    debugging status : 
+        iteration step number  (step)          : 2
+        model order            (n_real, n_cpx) : 2, 8
+        fitting relative error (mean, max)     : 0.009238337677479759, 0.17829589878851784
+    
+    debugging status : 
+        iteration step number  (step)          : 3
+        model order            (n_real, n_cpx) : 2, 8
+        fitting relative error (mean, max)     : 0.008941892283839993, 0.08606583008523701
+    
+    debugging status : 
+        iteration step number  (step)          : 4
+        model order            (n_real, n_cpx) : 0, 9
+        fitting relative error (mean, max)     : 0.010310394416765052, 0.1334009912197929
+    
+    debugging status : 
+        iteration step number  (step)          : 5
+        model order            (n_real, n_cpx) : 0, 9
+        fitting relative error (mean, max)     : 0.007934015433107247, 0.1275905688155805
+    
+    debugging status : 
+        iteration step number  (step)          : 6
+        model order            (n_real, n_cpx) : 0, 9
+        fitting relative error (mean, max)     : 0.005136035831997903, 0.11904704025676377
+    
+    debugging status : 
+        iteration step number  (step)          : 7
+        model order            (n_real, n_cpx) : 0, 9
+        fitting relative error (mean, max)     : 0.0030934834512960523, 0.07824607490636737
+    
+    debugging status : 
+        iteration step number  (step)          : 8
+        model order            (n_real, n_cpx) : 0, 9
+        fitting relative error (mean, max)     : 0.001885113862262611, 0.05200394706314038
+    
+    debugging status : 
+        iteration step number  (step)          : 9
+        model order            (n_real, n_cpx) : 2, 8
+        fitting relative error (mean, max)     : 0.0012306423246825483, 0.03610242395271164
+    
+    debugging status : 
+        iteration step number  (step)          : 10
+        model order            (n_real, n_cpx) : 2, 8
+        fitting relative error (mean, max)     : 0.0008741956237063604, 0.02478883302559956
+    
     
 
 
@@ -113,7 +124,10 @@ ax.legend()
 plt.savefig("test.svg")
 ```
 
-![test](https://user-images.githubusercontent.com/105657697/212677253-fca10b1b-0413-4c14-bc6d-2f36b0b957b7.svg)
+
+    
+![png](README_files/README_5_0.png)
+    
 
 
 ## References
@@ -125,3 +139,37 @@ plt.savefig("test.svg")
 [3] D. Deschrijver, M. Mrozowski, T. Dhaene and D. De Zutter, "Macromodeling of Multiport Systems Using a Fast Implementation of the Vector Fitting Method," in IEEE Microwave and Wireless Components Letters, vol. 18, no. 6, pp. 383-385, June 2008, doi: 10.1109/LMWC.2008.922585.
 
 
+```python
+!jupyter nbconvert --ClearMetadataPreprocessor.enabled=True --ClearOutput.enabled=True --to markdown README.ipynb
+```
+
+    [NbConvertApp] Converting notebook README.ipynb to markdown
+    [NbConvertApp] Support files will be in README_files\
+    [NbConvertApp] Making directory README_files
+    [NbConvertApp] Writing 3976 bytes to README.md
+    
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
