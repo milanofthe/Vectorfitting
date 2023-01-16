@@ -92,52 +92,17 @@ class VecFit:
         self.fit_Const  = fit_Const
         self.fit_Diff   = fit_Diff
         
+        #setup initial model fit
+        self._setup()
+
+
+    # checkers ---------------------------------------------------------------------
     
     def _has_TF(self):
         return hasattr(self, "TF")
-    
-    
-    def _reduce_order(self, tol=1e-2):
-        
-        """
-        check if some residues are small 
-        compared to the others (tol)
-        and then discarded them
-        
-        INPUTS : 
-            tol : (float) tolerance for discarding poles
-        """
-        
-        #check complex residues
-        res_abs_cpx = np.mean( np.abs(self.Residues_cpx), axis=(1,2) )
-        
-        #find small residues
-        idx_cpx = np.argwhere(res_abs_cpx / np.mean(res_abs_cpx) < tol)
-        
-        #discard poles and residues
-        if res_abs_cpx.size > 1 and idx_cpx.size > 0:
-            if hasattr(self, "Residues_Sig_cpx"):
-                self.Residues_Sig_cpx = np.delete(self.Residues_Sig_cpx, idx_cpx)
-            self.Residues_cpx = np.delete(self.Residues_cpx, idx_cpx)
-            self.Poles_cpx    = np.delete(self.Poles_cpx, idx_cpx)
-            self.n_cpx -= idx_cpx.size
-            print(f"n_cpx: {self.n_cpx+idx_cpx.size} -> {self.n_cpx}")
-            
-        #check real residues
-        res_abs_real = np.mean( np.abs(self.Residues_real), axis=(1,2) )
-        
-        #find small residues
-        idx_real = np.argwhere(res_abs_real / np.mean(res_abs_real) < tol)
-        
-        #discard poles and residues
-        if res_abs_real.size > 1 and idx_real.size > 0:
-            if hasattr(self, "Residues_Sig_real"):
-                self.Residues_Sig_real = np.delete(self.Residues_Sig_real, idx_real)
-            self.Residues_real = np.delete(self.Residues_real, idx_real)
-            self.Poles_real    = np.delete(self.Poles_real, idx_real)
-            self.n_real -= idx_real.size
-            print(f"n_real: {self.n_real+idx_real.size} -> {self.n_real}")
-    
+
+
+    # setup ------------------------------------------------------------------------
     
     def _set_poles(self):
         
@@ -174,7 +139,128 @@ class VecFit:
             #equally distributed poles
             self.Poles_cpx  = -np.linspace(omega_max/100, omega_max, self.n_cpx) * (1/100 + 1j)
             self.Poles_real = -np.linspace(omega_max/75 , omega_max, self.n_real) * ( 1/50 + 0j)
+    
+
+    def _setup(self):
+
+        """
+        Setup fitting procedure.
+        Set initial poles, compute initial residues 
+        and calculate error of initial fit
+        """
+
+        #set initial poles
+        self._set_poles()
         
+        #compute initial residues
+        self._resd()
+        
+        #compute initial error
+        self.err_max , self.err_mean = self._evaluate_fit()
+
+
+
+    # intermediate processing ------------------------------------------------------
+    
+    def _reduce_order(self, tol=1e-2):
+        
+        """
+        check if some residues are small 
+        compared to the others (tol)
+        and then discarded them
+        
+        INPUTS: 
+            tol : (float) tolerance for discarding poles
+        """
+        
+        #check complex residues
+        res_abs_cpx = np.mean( np.abs(self.Residues_cpx), axis=(1,2) )
+        
+        #find small residues
+        idx_cpx = np.argwhere(res_abs_cpx / np.mean(res_abs_cpx) < tol)
+        
+        #discard poles and residues
+        if res_abs_cpx.size > 1 and idx_cpx.size > 0:
+            if hasattr(self, "Residues_Sig_cpx"):
+                self.Residues_Sig_cpx = np.delete(self.Residues_Sig_cpx, idx_cpx)
+            self.Residues_cpx = np.delete(self.Residues_cpx, idx_cpx)
+            self.Poles_cpx    = np.delete(self.Poles_cpx, idx_cpx)
+            self.n_cpx -= idx_cpx.size
+            print(f"n_cpx: {self.n_cpx+idx_cpx.size} -> {self.n_cpx}")
+            
+        #check real residues
+        res_abs_real = np.mean( np.abs(self.Residues_real), axis=(1,2) )
+        
+        #find small residues
+        idx_real = np.argwhere(res_abs_real / np.mean(res_abs_real) < tol)
+        
+        #discard poles and residues
+        if res_abs_real.size > 1 and idx_real.size > 0:
+            if hasattr(self, "Residues_Sig_real"):
+                self.Residues_Sig_real = np.delete(self.Residues_Sig_real, idx_real)
+            self.Residues_real = np.delete(self.Residues_real, idx_real)
+            self.Poles_real    = np.delete(self.Poles_real, idx_real)
+            self.n_real -= idx_real.size
+            print(f"n_real: {self.n_real+idx_real.size} -> {self.n_real}")
+
+
+    def _enforce_stability(self):
+        
+        """
+        enforce stability by flipping poles 
+        with positive real part
+        """
+        
+        self.Poles_real = - np.abs(self.Poles_real) + 0j
+        self.Poles_cpx  = - np.abs(self.Poles_cpx.real) + 1j * self.Poles_cpx.imag
+    
+
+    def _evaluate_fit(self):
+        
+        """
+        evaluate the fit by computing 
+        the relative error
+        """
+        
+        #check if transferfunction available
+        if not self._has_TF():
+            self._update_TF()
+        
+        #evaluate fit as rational function
+        D_fit = self.TF.evaluate(self.Freq * self.Freq_scale)
+        
+        #compute relative error
+        err = abs((self.Data - D_fit) / self.Data)
+        
+        #processing
+        err_max  = np.max(err)
+        err_mean = np.mean(err)
+        
+        return err_max, err_mean
+    
+    
+    def _update_TF(self):
+        
+        """
+        update internal representation of transfer function
+        -> rescale frequencies
+        """
+        
+        #build conjugate pairs
+        Poles_cpx    = sum( ([p, p.conj()] for p in self.Poles_cpx), [] )
+        Residues_cpx = sum( ([R, R.conj()] for R in self.Residues_cpx), [] )
+        
+        #build all poles
+        Poles    = np.array([ *self.Poles_real , *Poles_cpx  ])
+        Residues = np.array([ *self.Residues_real, *Residues_cpx ])
+        
+        self.TF = TransferFunction(Poles*self.Freq_scale, 
+                                   Residues*self.Freq_scale, 
+                                   self.Const, 
+                                   self.Diff/self.Freq_scale )
+
+
+    # matrix building --------------------------------------------------------------
         
     def _build_X(self):
         
@@ -297,6 +383,8 @@ class VecFit:
         
         return A
     
+
+    # residue computation ----------------------------------------------------------
     
     def _compute_residues(self):
         
@@ -607,6 +695,8 @@ class VecFit:
         res_cpx = R_F[self.n_real+ncd:]
         self.Residues_cpx = res_cpx[:self.n_cpx] + 1j * res_cpx[self.n_cpx:]
         
+
+    # pole computation -------------------------------------------------------------
         
     def _compute_poles(self):
         
@@ -667,18 +757,9 @@ class VecFit:
         self.n_real = self.Poles_real.size
         self.n_cpx  = self.Poles_cpx.size
         
-        
-    def _enforce_stability(self):
-        
-        """
-        enforce stability by flipping poles 
-        with positive real part
-        """
-        
-        self.Poles_real = - np.abs(self.Poles_real) + 0j
-        self.Poles_cpx  = - np.abs(self.Poles_cpx.real) + 1j * self.Poles_cpx.imag
     
-    
+    # iteration functions ----------------------------------------------------------
+
     # @timer
     def _iteration(self):
         
@@ -689,7 +770,7 @@ class VecFit:
         
         #discard poles
         if self.autoreduce:
-            self._reduce_order(tol=1e-2)
+            self._reduce_order()
         
         self._compute_poles()
         self._enforce_stability()
@@ -707,7 +788,7 @@ class VecFit:
         
         #discard poles
         if self.autoreduce:
-            self._reduce_order(tol=1e-2)
+            self._reduce_order()
         
         self._compute_poles()
         self._enforce_stability()
@@ -727,58 +808,32 @@ class VecFit:
         
         #discard poles
         if self.autoreduce:
-            self._reduce_order(tol=1e-2)
+            self._reduce_order()
             
         self._compute_poles()
         self._enforce_stability()
         self._compute_residues_F_fast_relax()
         self._update_TF()
-        
-        
-    def _evaluate_fit(self):
-        
-        """
-        evaluate the fit by computing 
-        the relative error
-        """
-        
-        #check if transferfunction available
-        if not self._has_TF():
-            self._update_TF()
-        
-        #evaluate fit as rational function
-        D_fit = self.TF.evaluate(self.Freq * self.Freq_scale)
-        
-        #compute relative error
-        err = abs((self.Data - D_fit) / self.Data)
-        
-        #processing
-        err_max  = np.max(err)
-        err_mean = np.mean(err)
-        
-        return err_max, err_mean
-    
-    
-    def _update_TF(self):
+
+
+    # debugging ---------------------------------------------------
+
+    def _debug(self):
         
         """
-        update internal representation of transfer function
-        -> rescale frequencies
+        print current state of VF engine for debugging
         """
         
-        #build conjugate pairs
-        Poles_cpx    = sum( ([p, p.conj()] for p in self.Poles_cpx), [] )
-        Residues_cpx = sum( ([R, R.conj()] for R in self.Residues_cpx), [] )
-        
-        #build all poles
-        Poles    = np.array([ *self.Poles_real , *Poles_cpx  ])
-        Residues = np.array([ *self.Residues_real, *Residues_cpx ])
-        
-        self.TF = TransferFunction(Poles*self.Freq_scale, 
-                                   Residues*self.Freq_scale, 
-                                   self.Const, 
-                                   self.Diff/self.Freq_scale )
-        
+        s  =  "debugging status : \n"
+        s += f"    iteration step number  (step)          : {self.step}\n"
+        s += f"    model order            (n_real, n_cpx) : {self.n_real}, {self.n_cpx}\n"
+        s += f"    fitting relative error (mean, max)     : {self.err_mean}, {self.err_max}\n"
+
+        print(s)
+
+
+
+    # fitting call ------------------------------------------------
         
     def fit(self, tol=1e-3, max_steps=5, debug=False):
         
@@ -791,33 +846,20 @@ class VecFit:
             debug     : (bool) print error and final model order
         """
         
-        #set initial poles
-        self._set_poles()
-        
-        #compute initial residues
-        self._resd()
-        
-        #compute initial error
-        self.err_max , self.err_mean = self._evaluate_fit()
-        
-        if debug:
-            print("err_max  =",self.err_max)
-            print("err_mean =",self.err_mean)
-        
-        steps = 0
-        while self.err_max > tol and steps < max_steps:
-            steps += 1
-            
+        self.step = 0
+        while self.err_max > tol and self.step < max_steps:
+
+            if debug:
+                self._debug()
+
             #perform fitting iteration
             self._iter()
             
             #compute error
             self.err_max , self.err_mean = self._evaluate_fit()
+
+            #increment step counter
+            self.step += 1
             
-            if debug:
-                print("err_max  =",self.err_max)
-                print("err_mean =",self.err_mean)
-                
         if debug:
-            print("n_real =", self.n_real)
-            print("n_cpx  =", self.n_cpx)
+            self._debug()
