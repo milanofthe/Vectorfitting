@@ -113,10 +113,7 @@ ax.legend()
 plt.savefig("test.svg")
 ```
 
-
-    
-![png](README_files/README_5_0.png)
-    
+![test](https://user-images.githubusercontent.com/105657697/212677253-fca10b1b-0413-4c14-bc6d-2f36b0b957b7.svg)
 
 
 ## References
