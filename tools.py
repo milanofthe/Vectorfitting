@@ -15,8 +15,6 @@ from functools import wraps
 from time import perf_counter
 
 
-
-
 # MISC ==================================================================================
 
 def timer(func):
@@ -319,79 +317,6 @@ def gilbert_realization(Poles, Residues, Const, Diff):
     E = Diff
     
     return  A, B, C, D, E 
-
-
-def sylvester_realization(Poles, Residues, Const, Diff, A_pivot=None, F_feedback=None):
-    
-    """
-    build real valued statespace model 
-    from transfer function in pole residue form
-    by solving a sylvester equatiuon
-    
-    utilizes the gilbert realization as a basis but 
-    needs frequency range for pivoting matrix
-    
-    pole residue form:
-        H(s) = Const + s * Diff + sum( Residues / (s - Poles) )
-    
-    statespace form:
-        H(s) = C * (s*I - A)^-1 * B + D + s * E
-        
-    see:
-        Passive Parametric Macromodeling by Using
-        Sylvester State-Space Realizations
-    """
-    
-    #real valued gilbert realization
-    A_gil, B_gil, C_gil, D_gil, E_gil = gilbert_realization(Poles, Residues, Const, Diff)
-        
-    #build feedback matrix for sylvester
-    if F_feedback is None:
-        F_feedback = np.random.rand(*B_gil.shape)
-        F_feedback, _ = np.linalg.qr( F_feedback, mode="reduced" )
-        
-    #build pivot matrix for sylvester
-    if A_pivot is None:
-        #model order
-        n, *_ = A_gil.shape
-            
-        #scaled real part of poles
-        alpha = 0.001
-        
-        #maximum imaginary part of poles
-        omega_max = np.max(np.abs(Poles))
-        
-        #poles close to imaginary axis
-        poles_pivot = -(alpha + 1j) * np.linspace( 1/n, 1, n//2 ) * omega_max
-        
-        #complex conjugate pairs
-        poles_pivot = np.vstack(( poles_pivot, poles_pivot.conj() )).T.flatten()
-        
-        #build real companion matrix from poles
-        A_pivot = -np.eye(n) * alpha / n
-        
-        p_old = 0
-        for k, p in enumerate(poles_pivot):
-            
-            #check if complex conjugate
-            is_cc = (p.imag != 0 and p == np.conj(p_old))
-            p_old = p
-            
-            A_pivot[k,k] = p.real
-            if is_cc:
-                A_pivot[k, k-1] = -p.imag
-                A_pivot[k-1, k] = p.imag
-        
-    #solve sylvesters equation
-    X = spLA.solve_sylvester( A_gil, -A_pivot, -B_gil.dot(F_feedback.T) )
-    X_inv = np.linalg.inv(X)
-        
-    #compute new realization by similarity transformation
-    A = X_inv.dot(A_gil).dot(X)
-    B = X_inv.dot(B_gil)
-    C = C_gil.dot(X)
-        
-    return A, B, C, D_gil, E_gil, A_pivot, F_feedback
 
 
 # @timer
