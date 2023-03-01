@@ -115,12 +115,14 @@ class VecFit:
         
         if self.smart:
             
-            #process data
-            Magnitude = abs( np.prod(self.Data, axis=(1,2)) )
-            
             #find all local maxima in magnitude of data
-            maxima = find_local_maxima(Magnitude, self.Omega)
+            maxima_idx = find_local_maxima(abs(self.Data))
+            maxima = self.Omega[maxima_idx]
             
+            print(maxima_idx)
+            print(maxima)
+
+
             #allocate complex poles near maxima
             self.n_cpx     = len(maxima)
             self.Poles_cpx = maxima * (- 1/100 +  1j)

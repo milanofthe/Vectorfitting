@@ -201,66 +201,22 @@ def evaluate_tf_laurent(f, poles, residues, const, diff):
 
     
 # MAXIMA ==================================================================================
-    
-def _fit_parabola(D0, D1, D2, w0, w1, w2):
-    
+
+def find_local_maxima(arr):
     """
-    fit parabola to datapairs (Di, wi),
-    multidimensional fit
-    
+    Finds all the local maxima in a multidimensional array
+
     """
-    
-    #check dimensions
-    if isinstance(D0, np.ndarray):
-        dd0 = D0.flatten()
-        dd1 = D1.flatten()
-        dd2 = D2.flatten()
-    else:
-        dd0 = np.array([D0])
-        dd1 = np.array([D1])
-        dd2 = np.array([D2])
-    
-    #build van der Monde matrix
-    M = np.array([[1, w0, w0**2],[1, w1, w1**2],[1, w2, w2**2]])
-    
-    #solve for all dimensions in dataset
-    for i, vec in enumerate(zip(dd0, dd1, dd2)):
-        dd0[i], dd1[i], dd2[i] = np.linalg.solve(M, np.array(vec))
-        
-    return dd0, dd1, dd2
+
+    # Compute the differences between adjacent elements along axis 0
+    diffs = np.diff(arr, axis=0)
+
+    # Find the indices of the peaks 
+    #(where the differences change from positive to negative)
+    idx = np.argwhere((diffs[:-1] > 0) & (diffs[1:] < 0))
+    return idx[:,0]
 
 
-def find_local_maxima(Data, Omega):
-    
-    """
-    find local maxima in dataset by 
-    analyzing curvature via parabola fit
-    
-    Data has to be reasonably smooth 
-    without ripple
-    
-    """
-    
-    Maxima = []
-    
-    #iterate over all datasamples
-    for D0, D1, D2, w0, w1, w2 in zip( Data[:-2], Data[1:-1], Data[2:], 
-                                       Omega[:-2], Omega[1:-1], Omega[2:] ):
-        
-        #fit parabola to three points
-        A0, A1, A2 = _fit_parabola(D0, D1, D2, w0, w1, w2)
-        
-        #projected extrema
-        ex = - A1 / (2 * A2)
-        
-        #check if estimated extremum within interval and if maximum
-        valid = np.any( ex > w0) and np.any(ex < w2) and np.any(A2 < 0)
-        
-        #if valid, append center point
-        if valid:
-            Maxima.append( w1 )
-    
-    return np.array(Maxima)
 
     
 # STATESPACE REALIZATIONS =================================================================
@@ -326,30 +282,17 @@ def smartblock(AA):
     extended version of numpy.block() where 
     the dimensions of integer entries get
     upscaled automatically to the other blocks
-    
+
     """
-    
-    #collect shapes
-    Shapes = np.array([[ x.shape if isinstance(x, np.ndarray) else (1,1) for x in R ] for R in AA])
-    
-    for i, R in enumerate(AA):
-        
-        #get row shape
-        if 0 in Shapes[i,:,0]:
-            r_shp = 0
-        else:
-            r_shp = np.amax(Shapes[i,:,0])
-        
-        for j, x in enumerate(R):
-            
-            #get column shape
-            if 0 in Shapes[:,j,1]:
-                c_shp = 0
-            else:
-                c_shp = np.amax(Shapes[:,j,1])
-            
-            #upscale smaller arrays
-            if not isinstance(x, np.ndarray):
-                AA[i][j] *= np.ones((r_shp, c_shp))
-    
+
+    # Collect shapes
+    shapes = np.array([[x.shape if isinstance(x, np.ndarray) else (1, 1) for x in R] for R in AA])
+    r_shapes = np.max(shapes[:, :, 0], axis=1)
+    c_shapes = np.max(shapes[:, :, 1], axis=0)
+
+    # Upscale integer entries
+    AA = np.where(np.vectorize(lambda x: not isinstance(x, np.ndarray))(AA),
+                  np.vectorize(lambda x, r, c: np.full((r, c), x))(AA, r_shapes[:, np.newaxis], c_shapes),
+                  AA)
+
     return np.block(AA)
