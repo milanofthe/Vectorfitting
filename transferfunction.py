@@ -101,6 +101,9 @@ class TransferFunction:
             Residues = self.Residues
             
             return TransferFunction(Poles, Residues, Const, Diff)
+
+        else:
+            raise VaueError(f"addition not defined for type '{type(other)}'")
             
     def __mul__(self, other):
         """
@@ -115,6 +118,9 @@ class TransferFunction:
             Residues = self.Residues[:] * other
             
             return TransferFunction(Poles, Residues, Const, Diff)
+
+        else:
+            raise VaueError(f"multiplication not defined for type '{type(other)}'")
         
     def __truediv__(self, other):
         """
@@ -129,6 +135,9 @@ class TransferFunction:
             Residues = self.Residues[:] / other
             
             return TransferFunction(Poles, Residues, Const, Diff)
+
+        else:
+            raise VaueError(f"division not defined for type '{type(other)}'")
         
     # methods for analysis ---------------------------------------
     
@@ -137,6 +146,9 @@ class TransferFunction:
         """
         check if transfer function describes a 
         passive system in a given frequency range
+
+        INPUTS :
+            Freq : numpy array of frequency values
         """
         
         #not stable => not passive
@@ -147,7 +159,7 @@ class TransferFunction:
         
         Eigs = []
         for h in H:
-            #compute eigenvalues of heamitian part
+            #compute eigenvalues of hermitian part
             ev = np.linalg.eigvals( h + h.T.conj() )
             Eigs.append(ev.real)
         
@@ -173,6 +185,10 @@ class TransferFunction:
     
     # @timer
     def evaluate(self, Freq):
+        """
+        evaluate the transfer function over an array of frequencies
+        
+        INPUTS :
+            Freq : numpy array of frequency values
+        """
         return np.array([evaluate_tf_laurent(f, self.Poles, self.Residues, self.Const, self.Diff) for f in Freq])
-
-    

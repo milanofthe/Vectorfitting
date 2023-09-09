@@ -13,7 +13,8 @@ import numpy as np
 
 from tools import (
     timer,
-    find_local_maxima
+    find_local_maxima,
+    wlstsq
     )
 
 from transferfunction import (
@@ -42,7 +43,17 @@ class VecFit:
         of the Vector Fitting Method (Deschrijver, 2008)
     """
     
-    def __init__(self, Data, Freq, n_cpx=2, n_real=1, mode="normal", smart=False, autoreduce=False, fit_Const=True, fit_Diff=True):
+    def __init__(self, 
+                 Data, 
+                 Freq, 
+                 n_cpx=2, 
+                 n_real=1, 
+                 mode="normal", 
+                 smart=False, 
+                 autoreduce=False, 
+                 fit_Const=True, 
+                 fit_Diff=True
+                 ):
         
         """
         initialize vectorfitting engine with settings
@@ -72,6 +83,9 @@ class VecFit:
         self.Freq_scale = np.max(Freq)
         self.Freq  = Freq / self.Freq_scale
         self.Omega = Freq / self.Freq_scale * 2 * np.pi
+
+        #get shape of data
+        N, n, m = Data.shape
         
         #number of initial poles
         self.n_real = n_real
@@ -118,10 +132,6 @@ class VecFit:
             #find all local maxima in magnitude of data
             maxima_idx = find_local_maxima(abs(self.Data))
             maxima = self.Omega[maxima_idx]
-            
-            print(maxima_idx)
-            print(maxima)
-
 
             #allocate complex poles near maxima
             self.n_cpx     = len(maxima)
@@ -164,7 +174,7 @@ class VecFit:
 
     # intermediate processing ------------------------------------------------------
     
-    def _reduce_order(self, tol=1e-2):
+    def _reduce_order(self, tol=5e-3):
         
         """
         check if some residues are small 
@@ -180,9 +190,9 @@ class VecFit:
         
         #find small residues
         idx_cpx = np.argwhere(res_abs_cpx / np.mean(res_abs_cpx) < tol)
-        
+
         #discard poles and residues
-        if res_abs_cpx.size > 1 and idx_cpx.size > 0:
+        if res_abs_cpx.size > 1 and idx_cpx.size > 0:            
             if hasattr(self, "Residues_Sig_cpx"):
                 self.Residues_Sig_cpx = np.delete(self.Residues_Sig_cpx, idx_cpx)
             self.Residues_cpx = np.delete(self.Residues_cpx, idx_cpx)
@@ -281,6 +291,7 @@ class VecFit:
         else:
             pp = lambda w : [ ] 
         
+        #generate lists of laurent partial fractions
         pr   = lambda w : [ 1/(1j * w - p) for p in self.Poles_real ]
         pc_r = lambda w : [ 1/(1j * w - p) + 1/(1j * w - p.conj()) for p in self.Poles_cpx ]
         pc_i = lambda w : [ 1j/(1j * w - p) - 1j/(1j * w - p.conj()) for p in self.Poles_cpx ]
@@ -420,7 +431,7 @@ class VecFit:
         
         #solve least squares problem
         R, *_ = np.linalg.lstsq(AA, FF, rcond=None)
-        
+
         #flatten results
         R = R.flatten()
         
@@ -767,7 +778,7 @@ class VecFit:
         
         """
         perform one iteration of 
-        the fitting procedure
+        the standard fitting procedure
         """
         
         #discard poles
@@ -858,7 +869,7 @@ class VecFit:
             self._iter()
             
             #compute error
-            self.err_max , self.err_mean = self._evaluate_fit()
+            self.err_max, self.err_mean = self._evaluate_fit()
 
             #increment step counter
             self.step += 1
