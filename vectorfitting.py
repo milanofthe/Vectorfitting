@@ -11,13 +11,13 @@
 
 import numpy as np
 
-from tools import (
+from vectorfitting.tools import (
     timer,
     find_local_maxima,
     wlstsq
     )
 
-from transferfunction import (
+from vectorfitting.transferfunction import (
     TransferFunction
     )
 
@@ -70,12 +70,13 @@ class VecFit:
             fit_Diff   : (bool) fit differenciating part of model
         """
         
+
         #get number of samples
         N , *_ = Freq.shape
         
-        #catch SISO case
+        #catch SISO case and expand axes
         if Data.shape == Freq.shape:
-            self.Data = Data.reshape((N,1,1))
+            self.Data = Data[:, np.newaxis, np.newaxis]
         else:
             self.Data = Data
         
@@ -85,22 +86,20 @@ class VecFit:
         self.Omega = Freq / self.Freq_scale * 2 * np.pi
 
         #get shape of data
-        N, n, m = Data.shape
+        N, n, m = self.Data.shape
         
         #number of initial poles
         self.n_real = n_real
         self.n_cpx  = n_cpx
-        
-        #modes for fitting
-        mode_funcs = {"normal"     : [self._compute_residues             , self._iteration           ], 
-                      "relax"      : [self._compute_residues_relax       , self._iteration_relax     ], 
-                      "fast_relax" : [self._compute_residues_F_fast_relax, self._iteration_fast_relax]
-                      }
-        
-        #fitting functions by mode -> defaults to normal
-        self._resd, self._iter = mode_funcs[mode if mode in mode_funcs else "normal"]
-        
-        #fitting options
+
+        #fitting mode selection
+        if mode not in ["normal", "relax", "fast_relax"]:
+            self.mode = "normal"
+            print(f"'{mode}' not in ['normal', 'relax', 'fast_relax'] -> fallback to 'normal'")
+        else:
+            self.mode = mode
+
+        #other fitting options
         self.smart      = smart
         self.autoreduce = autoreduce
         self.fit_Const  = fit_Const
@@ -164,9 +163,14 @@ class VecFit:
         #set initial poles
         self._set_poles()
         
-        #compute initial residues
-        self._resd()
-        
+        #compute initial residues according to selected mode
+        if self.mode == "normal":
+            self._compute_residues()
+        elif self.mode == "relax":
+            self._compute_residues_relax()
+        elif self.mode == "fast_relax":
+            self._compute_residues_F_fast_relax()
+
         #compute initial error
         self.err_max , self.err_mean = self._evaluate_fit()
 
@@ -186,34 +190,36 @@ class VecFit:
         """
         
         #check complex residues
-        res_abs_cpx = np.mean( np.abs(self.Residues_cpx), axis=(1,2) )
-        
-        #find small residues
-        idx_cpx = np.argwhere(res_abs_cpx / np.mean(res_abs_cpx) < tol)
+        if len(self.Residues_cpx) > 0:
+            res_abs_cpx = np.mean( np.abs(self.Residues_cpx), axis=(1,2) )
+            
+            #find small residues
+            idx_cpx = np.argwhere(res_abs_cpx / np.mean(res_abs_cpx) < tol)
 
-        #discard poles and residues
-        if res_abs_cpx.size > 1 and idx_cpx.size > 0:            
-            if hasattr(self, "Residues_Sig_cpx"):
-                self.Residues_Sig_cpx = np.delete(self.Residues_Sig_cpx, idx_cpx)
-            self.Residues_cpx = np.delete(self.Residues_cpx, idx_cpx)
-            self.Poles_cpx    = np.delete(self.Poles_cpx, idx_cpx)
-            self.n_cpx -= idx_cpx.size
-            print(f"n_cpx: {self.n_cpx+idx_cpx.size} -> {self.n_cpx}")
+            #discard poles and residues
+            if res_abs_cpx.size > 1 and idx_cpx.size > 0:            
+                if hasattr(self, "Residues_Sig_cpx"):
+                    self.Residues_Sig_cpx = np.delete(self.Residues_Sig_cpx, idx_cpx)
+                self.Residues_cpx = np.delete(self.Residues_cpx, idx_cpx)
+                self.Poles_cpx    = np.delete(self.Poles_cpx, idx_cpx)
+                self.n_cpx -= idx_cpx.size
+                print(f"n_cpx: {self.n_cpx+idx_cpx.size} -> {self.n_cpx}")
             
         #check real residues
-        res_abs_real = np.mean( np.abs(self.Residues_real), axis=(1,2) )
-        
-        #find small residues
-        idx_real = np.argwhere(res_abs_real / np.mean(res_abs_real) < tol)
-        
-        #discard poles and residues
-        if res_abs_real.size > 1 and idx_real.size > 0:
-            if hasattr(self, "Residues_Sig_real"):
-                self.Residues_Sig_real = np.delete(self.Residues_Sig_real, idx_real)
-            self.Residues_real = np.delete(self.Residues_real, idx_real)
-            self.Poles_real    = np.delete(self.Poles_real, idx_real)
-            self.n_real -= idx_real.size
-            print(f"n_real: {self.n_real+idx_real.size} -> {self.n_real}")
+        if len(self.Residues_real) > 0:
+            res_abs_real = np.mean( np.abs(self.Residues_real), axis=(1,2) )
+            
+            #find small residues
+            idx_real = np.argwhere(res_abs_real / np.mean(res_abs_real) < tol)
+            
+            #discard poles and residues
+            if res_abs_real.size > 1 and idx_real.size > 0:
+                if hasattr(self, "Residues_Sig_real"):
+                    self.Residues_Sig_real = np.delete(self.Residues_Sig_real, idx_real)
+                self.Residues_real = np.delete(self.Residues_real, idx_real)
+                self.Poles_real    = np.delete(self.Poles_real, idx_real)
+                self.n_real -= idx_real.size
+                print(f"n_real: {self.n_real+idx_real.size} -> {self.n_real}")
 
 
     def _enforce_stability(self):
@@ -413,11 +419,13 @@ class VecFit:
         nf = m * n
         
         #number of residues, const and diff variables
-        ncd = 0
-        if self.fit_Const:
-            ncd += 1
-        if self.fit_Diff:
-            ncd += 1
+        #ncd = 0
+        #if self.fit_Const:
+        #    ncd += 1
+        #if self.fit_Diff:
+        #    ncd += 1
+
+        ncd = int(self.fit_Const) + int(self.fit_Diff)
         
         nr = ncd + self.n_real + 2*self.n_cpx
         
@@ -425,7 +433,7 @@ class VecFit:
         A  = self._compute_A()
         AA = np.vstack((A.real, A.imag))
         
-        #reformat data and add relaxation row
+        #reformat data 
         F = self.Data.reshape((N, nf)).T.flatten()
         FF = np.hstack((F.real, F.imag)).reshape((2*F.size, 1))
         
@@ -482,11 +490,13 @@ class VecFit:
         nf = m * n
         
         #number of residues, const and diff variables
-        ncd = 0
-        if self.fit_Const:
-            ncd += 1
-        if self.fit_Diff:
-            ncd += 1
+        #ncd = 0
+        #if self.fit_Const:
+        #    ncd += 1
+        #if self.fit_Diff:
+        #    ncd += 1
+
+        ncd = int(self.fit_Const) + int(self.fit_Diff)
         
         nr = ncd + self.n_real + 2*self.n_cpx
         
@@ -563,11 +573,13 @@ class VecFit:
         nf = m * n
         
         #number of residues, const and diff variables
-        ncd = 0
-        if self.fit_Const:
-            ncd += 1
-        if self.fit_Diff:
-            ncd += 1
+        #ncd = 0
+        #if self.fit_Const:
+        #    ncd += 1
+        #if self.fit_Diff:
+        #    ncd += 1
+
+        ncd = int(self.fit_Const) + int(self.fit_Diff)
         
         nr = ncd + self.n_real + 2*self.n_cpx
         
@@ -653,11 +665,13 @@ class VecFit:
         nf = m * n
         
         #number of residues, const and diff variables
-        ncd = 0
-        if self.fit_Const:
-            ncd += 1
-        if self.fit_Diff:
-            ncd += 1
+        #ncd = 0
+        #if self.fit_Const:
+        #    ncd += 1
+        #if self.fit_Diff:
+        #    ncd += 1
+
+        ncd = int(self.fit_Const) + int(self.fit_Diff)
         
         nr = ncd + self.n_real + 2*self.n_cpx
         
@@ -865,8 +879,13 @@ class VecFit:
             if debug:
                 self._debug()
 
-            #perform fitting iteration
-            self._iter()
+            #perform fitting iteration according to selected mode
+            if self.mode == "normal":
+                self._iteration()
+            elif self.mode == "relax":
+                self._iteration_relax()
+            elif self.mode == "fast_relax":
+                self._iteration_fast_relax()
             
             #compute error
             self.err_max, self.err_mean = self._evaluate_fit()
