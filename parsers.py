@@ -65,11 +65,11 @@ def read_touchstone(path):
     Comments = []
     
     #extract number of ports from path
-    ns = re.search(".(.*)p", path[-4:]).group(1)
-    n = eval( ns[1:] )
-
+    _1, *_n, _2 = path.split(".")[-1]
+    n = int("".join(_n))
+    
     #rows that each datasample occupies
-    rows_per_sample = n*(int(n/4)+(n%4>0))
+    rows_per_sample = n*(int(n/4)+(n%4>0)) if n > 2 else 1
     
     #dictionary for frequency unit assignment
     unit_dict= {"ghz":1e9, "mhz":1e6, "khz":1e3, "hz":1}
