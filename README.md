@@ -17,8 +17,8 @@ import matplotlib.pyplot as plt
 plt.style.use('dark_background')
 cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
-from vectorfitting import VecFit
-from parsers import read_touchstone
+from vectorfitting.vecfit import VecFit
+from vectorfitting.parsers import read_touchstone
 ```
 
 
