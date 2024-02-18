@@ -10,6 +10,7 @@ where $\mathbf{D}$ is the constant term, $\mathbf{E}$ is the linear term and $\m
 
 ## Example
 
+The example shows the fitting of 3-port s-parameters of an RF inductor with center tap. The s-parameters are imported directly from the `s3p` touchstone file.
 
 ```python
 import numpy as np
