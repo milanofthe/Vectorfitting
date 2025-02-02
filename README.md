@@ -2,7 +2,7 @@
 
 This is a from scratch pure python implementation of the fast relaxed vectorfitting algorithm for MIMO frequency domain data. Different modes (standard VF, relaxed VF and fast relaxed VF) are implemented. Matrix shaped frequency domain data is supported, and a model with common poles is fitted
 
-$$ \mathbf{H}_{fit}(s) = \mathbf{D} + s \cdot \mathbf{E} + \sum_{k=1}^{n} \mathbf{R}_{k} \cdot \frac{1}{s - p_k} $$
+$$\mathbf{H}_{fit}(s) = \mathbf{D} + s \cdot \mathbf{E} + \sum_{k=1}^{n} \mathbf{R}_{k} \cdot \frac{1}{s - p_k} $$
 
 where $\mathbf{D}$ is the constant term, $\mathbf{E}$ is the linear term and $\mathbf{R}_{k}$, $p_k$ are the (possibly complex) residues in matrix form and poles. 
 
@@ -12,10 +12,10 @@ where $\mathbf{D}$ is the constant term, $\mathbf{E}$ is the linear term and $\m
 ```python
 import numpy as np
 import matplotlib.pyplot as plt
-plt.style.use('dark_background')
+# plt.style.use('dark_background')
 cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
-from vectorfitting.vecfit import VecFit
+from vectorfitting import VecFit, RelaxedVecFit, FastRelaxedVecFit
 from vectorfitting.parsers import read_touchstone
 ```
 
@@ -23,12 +23,22 @@ from vectorfitting.parsers import read_touchstone
 ```python
 #load data from snp file
 Freq, H, *_ = read_touchstone(r"example_data/3port.s3p")
+
+#initialize vectorfitting engine
+
 ```
 
 
 ```python
-#initialize vectorfitting engine
-VF = VecFit(H, Freq, n_cpx=5, n_real=1, mode="fast_relax", smart=False, autoreduce=True, fit_Const=True, fit_Diff=False)
+#or initialize vectorfitting engine directly from touchstone file
+VF, H, Freq = FastRelaxedVecFit.from_touchstone(
+    filepath=r"example_data/3port.s3p",
+    n_cpx=6,
+    n_real=1,
+    smart=False,
+    autoreduce=False
+)
+
 
 #run fitting procedure
 VF.fit(tol=2e-3, max_steps=15, debug=True)
@@ -36,87 +46,22 @@ VF.fit(tol=2e-3, max_steps=15, debug=True)
 
     debugging status : 
         iteration step number  (step)          : 0
-        model order            (n_real, n_cpx) : 1, 5
-        fitting relative error (mean, max)     : 0.49136901566282815, 2.6578502025354247
+        model order            (n_real, n_cpx) : 7, 3
+        fitting relative error (mean, max)     : 0.0001708429691544018, 0.0023363418460802367
     
     debugging status : 
         iteration step number  (step)          : 1
-        model order            (n_real, n_cpx) : 3, 4
-        fitting relative error (mean, max)     : 0.0005314484496934593, 0.0037071766858118166
-    
-    n_cpx: 4 -> 3
-    n_real: 3 -> 1
-    debugging status : 
-        iteration step number  (step)          : 2
-        model order            (n_real, n_cpx) : 1, 3
-        fitting relative error (mean, max)     : 0.000601863484911078, 0.009863669001014331
-    
-    debugging status : 
-        iteration step number  (step)          : 3
-        model order            (n_real, n_cpx) : 1, 3
-        fitting relative error (mean, max)     : 0.0006076050098628053, 0.008919597399132284
-    
-    debugging status : 
-        iteration step number  (step)          : 4
-        model order            (n_real, n_cpx) : 1, 3
-        fitting relative error (mean, max)     : 0.0006076550011959909, 0.008918540946275663
-    
-    debugging status : 
-        iteration step number  (step)          : 5
-        model order            (n_real, n_cpx) : 1, 3
-        fitting relative error (mean, max)     : 0.000607632170121146, 0.008918566425846043
-    
-    debugging status : 
-        iteration step number  (step)          : 6
-        model order            (n_real, n_cpx) : 1, 3
-        fitting relative error (mean, max)     : 0.0006076146740863348, 0.008918478457278533
-    
-    debugging status : 
-        iteration step number  (step)          : 7
-        model order            (n_real, n_cpx) : 1, 3
-        fitting relative error (mean, max)     : 0.0006075996265260031, 0.008918338497518025
-    
-    debugging status : 
-        iteration step number  (step)          : 8
-        model order            (n_real, n_cpx) : 1, 3
-        fitting relative error (mean, max)     : 0.0006075856683252453, 0.008918175406857276
-    
-    debugging status : 
-        iteration step number  (step)          : 9
-        model order            (n_real, n_cpx) : 1, 3
-        fitting relative error (mean, max)     : 0.000607572196899556, 0.008918002032897865
-    
-    debugging status : 
-        iteration step number  (step)          : 10
-        model order            (n_real, n_cpx) : 1, 3
-        fitting relative error (mean, max)     : 0.0006075589445992705, 0.008917824092794605
-    
-    debugging status : 
-        iteration step number  (step)          : 11
-        model order            (n_real, n_cpx) : 1, 3
-        fitting relative error (mean, max)     : 0.0006075457924385128, 0.008917644130316128
-    
-    debugging status : 
-        iteration step number  (step)          : 12
-        model order            (n_real, n_cpx) : 1, 3
-        fitting relative error (mean, max)     : 0.0006075326875048429, 0.008917463277106725
-    
-    debugging status : 
-        iteration step number  (step)          : 13
-        model order            (n_real, n_cpx) : 1, 3
-        fitting relative error (mean, max)     : 0.0006075196062661778, 0.008917282036522933
-    
-    debugging status : 
-        iteration step number  (step)          : 14
-        model order            (n_real, n_cpx) : 1, 3
-        fitting relative error (mean, max)     : 0.0006075065382573192, 0.00891710063243876
-    
-    debugging status : 
-        iteration step number  (step)          : 15
-        model order            (n_real, n_cpx) : 1, 3
-        fitting relative error (mean, max)     : 0.0006074934788234803, 0.008916919164411521
+        model order            (n_real, n_cpx) : 3, 5
+        fitting relative error (mean, max)     : 9.409935882693254e-05, 0.0008016668878070043
     
     
+
+
+
+
+    <vectorfitting.transferfunction.TransferFunction at 0x229ef6a8140>
+
+
 
 
 ```python
@@ -130,7 +75,7 @@ err_rel = (H - H_fit) / H
 dB  = lambda x: 20*np.log10(abs(x))
 
 #plot results
-fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(10,6), tight_layout=True, dpi=150)
+fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(10,6), tight_layout=True, dpi=100)
 
 N, n, m = H.shape
 
@@ -146,7 +91,7 @@ ax.set_ylabel("mag in dB")
 ax.grid(True)
 ax.legend(loc="lower right")
 
-fig.savefig("test_freq.svg")
+fig.savefig("Figures/test_freq.png", dpi=300)
 ```
 
 
@@ -163,7 +108,7 @@ poles = VF.TF.Poles
 print("poles :", poles)
 
 #plot results
-fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6,6), tight_layout=True, dpi=150)
+fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6,6), tight_layout=True, dpi=100)
 
 ax.scatter(poles.real, poles.imag, marker="x", s=60, color=cycle[0], label="poles")
 
@@ -172,14 +117,16 @@ ax.set_ylabel("Imag")
 ax.grid(True)
 ax.legend(loc="lower right")
 
-fig.savefig("test_poles.svg")
-
+fig.savefig("Figures/test_poles.png", dpi=300)
 ```
 
-    poles : [-1.82950411e+11+0.00000000e+00j -3.69223122e+10+6.37578277e+11j
-     -3.69223122e+10-6.37578277e+11j -4.08834650e+11+7.83778848e+11j
-     -4.08834650e+11-7.83778848e+11j -4.28507940e+11+4.25829589e+11j
-     -4.28507940e+11-4.25829589e+11j]
+    poles : [-1.72203113e+12+0.00000000e+00j -1.83467749e+11+0.00000000e+00j
+     -5.17583220e+09+0.00000000e+00j -9.25175278e+10+1.32482288e+12j
+     -9.25175278e+10-1.32482288e+12j -7.61051335e+11+3.86841214e+11j
+     -7.61051335e+11-3.86841214e+11j -3.68806617e+10+6.37226049e+11j
+     -3.68806617e+10-6.37226049e+11j -1.75281196e+11+9.13374927e+10j
+     -1.75281196e+11-9.13374927e+10j -1.13430812e+10+7.73637981e+08j
+     -1.13430812e+10-7.73637981e+08j]
     
 
 
@@ -200,6 +147,12 @@ fig.savefig("test_poles.svg")
 ```python
 !jupyter nbconvert --ClearMetadataPreprocessor.enabled=True --ClearOutput.enabled=True --to markdown README.ipynb
 ```
+
+    [NbConvertApp] Converting notebook README.ipynb to markdown
+    [NbConvertApp] Support files will be in README_files\
+    [NbConvertApp] Making directory README_files
+    [NbConvertApp] Writing 4401 bytes to README.md
+    
 
 
 ```python
